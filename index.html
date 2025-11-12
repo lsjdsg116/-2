@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧农业云监测平台</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🌱 智慧农业云监测平台</h1>
+        <p>基于云计算的环境数据实时监控系统</p>
+    </header>
+
+    <main>
+        <section class="dashboard">
+            <h2>环境数据大屏</h2>
+            <div class="charts">
+                <div class="chart-box">
+                    <h3>温度变化</h3>
+                    <div id="temperatureChart" class="chart"></div>
+                </div>
+                <div class="chart-box">
+                    <h3>土壤湿度</h3>
+                    <div id="humidityChart" class="chart"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="alerts">
+            <h2>📢 实时告警</h2>
+            <ul id="alertList">
+                <li>系统启动中...</li>
+            </ul>
+        </section>
+    </main>
+
+    <!-- 引入图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
