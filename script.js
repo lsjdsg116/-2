@@ -4,35 +4,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 初始化图表
     initCharts();
+// 配置你的后端API地址（替换为你的ECS公网IP）
+const API_BASE_URL = 'http://120.26.138.224:5000'; // ⚠️ 替换为你的真实IP
 
-    // 开始模拟数据更新
-    startDataSimulation();
+// 获取土壤湿度数据
+async function getSoilData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/soil_data`);
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ 获取土壤数据:', data.soil_moisture + '%');
+            return {
+                soil_moisture: data.soil_moisture,
+                timestamp: data.timestamp,
+                is_real_data: true
+            };
+        } else {
+            throw new Error(data.error || '未知错误');
+        }
+    } catch (error) {
+        console.log('❌ 使用模拟数据（原因:', error.message + ')');
+        return generateMockData();
+    }
+}
+
+// 更新启动函数
+document.addEventListener('DOMContentLoaded', function() {
+    initCharts();
+    
+    // 立即获取数据
+    updateSoilData();
+    
+    // 每30秒更新一次
+    setInterval(updateSoilData, 30000);
 });
 
-// 全局保存数据
-window.temperatureData = [];
-window.timeLabels = generateTimeLabels();
-
-// 初始化图表函数
-function initCharts() {
-    if (typeof echarts === 'undefined') {
-        console.error('echarts 未加载');
-        return;
+// 更新数据函数
+async function updateSoilData() {
+    const soilData = await getSoilData();
+    
+    // 更新湿度仪表盘
+    if (window.humidityChart) {
+        humidityChart.setOption({
+            series: [{
+                data: [{ 
+                    value: parseFloat(soilData.soil_moisture), 
+                    name: '土壤湿度' 
+                }]
+            }]
+        });
     }
+    
+    // 更新告警
+    updateAlerts(soilData);
+}
 
-    const tempEl = document.getElementById('temperatureChart');
-    const humEl = document.getElementById('humidityChart');
-
-    if (!tempEl || !humEl) {
-        console.warn('未找到图表 DOM 元素 (temperatureChart / humidityChart)');
-        return;
+// 更新告警显示
+function updateAlerts(data) {
+    const alertList = document.getElementById('alertList');
+    if (!alertList) return;
+    
+    alertList.innerHTML = '';
+    
+    const moisture = parseFloat(data.soil_moisture);
+    const time = new Date().toLocaleTimeString();
+    
+    if (moisture > 70) {
+        addAlert(`💦 过湿: ${moisture}%`, 'high', time);
+    } else if (moisture < 40) {
+        addAlert(`💧 过干: ${moisture}%`, 'low', time);
+    } else {
+        addAlert(`✅ 正常: ${moisture}%`, 'normal', time);
     }
+    
+    addAlert(`🕒 更新时间: ${time}`, 'info', time);
+}
 
-    // 初始化温度数据（24个点）
-    if (!window.temperatureData || window.temperatureData.length === 0) {
-        window.temperatureData = Array.from({ length: 24 }, () => randomInRange(15, 35));
-    }
-
+function addAlert(message, type, time) {
+    const alertList = document.getElementById('alertList');
+    const li = document.createElement('li');
+    li.innerHTML = `${time} - ${message}`;
+    alertList.appendChild(li);
+}
     // 初始化温度图表
     window.temperatureChart = echarts.init(tempEl);
     const temperatureOption = {
@@ -246,4 +300,5 @@ window.addEventListener('resize', function() {
     if (window.humidityChart && typeof window.humidityChart.resize === 'function') {
         window.humidityChart.resize();
     }
+
 });
